@@ -10,11 +10,11 @@ If you're starting from scratch, I'd build it as a native Android app using Kotl
 
 Reasons:
 
-Excellent BLE support.
-Google's documentation and examples are good.
-Easy to access all Bluetooth APIs.
-If you later want a polished app, you're already on the recommended Android stack.
-Plenty of BLE libraries exist if you want to simplify things.
+* Excellent BLE support.
+* Google's documentation and examples are good.
+* Easy to access all Bluetooth APIs.
+* If you later want a polished app, you're already on the recommended Android stack.
+* Plenty of BLE libraries exist if you want to simplify things.
 
 I would avoid Flutter or React Native initially. They can work, but BLE debugging is much easier natively.
 
@@ -24,12 +24,12 @@ Forget UI, databases, graphs, etc.
 
 Just make an app that can:
 
-Request Bluetooth permissions.
-Scan for nearby BLE devices.
-Find the Garmin Speed Sensor.
-Connect.
-Read the Cycling Speed characteristic.
-Display the wheel revolutions and timestamp.
+1. Request Bluetooth permissions.
+2. Scan for nearby BLE devices.
+3. Find the Garmin Speed Sensor.
+4. Connect.
+5. Read the Cycling Speed characteristic.
+6. Display the wheel revolutions and timestamp.
 
 That's a perfect first project.
 
@@ -38,26 +38,26 @@ How the sensor works
 The Garmin Speed Sensor 2 doesn't send "15 mph" or "24 km/h".
 
 It sends something like:
-
+```
 Cumulative Wheel Revolutions = 123456
 Last Wheel Event Time = 45123
-
+```
 Your app calculates speed by comparing two readings.
 
 Example:
 
 Previous:
-
+```
 Rev = 1000
 Time = 10000
-
+```
 Current:
-
+```
 Rev = 1005
 Time = 10500
-
+```
 If you know the wheel circumference (say 2.105 m):
-
+```
 5 revolutions
 
 Distance = 5 × 2.105
@@ -67,7 +67,7 @@ Time = 0.5 seconds
 
 Speed = 10.525 / 0.5
 = 21.05 m/s
-
+```
 Convert to km/h or mph.
 
 This is exactly how Garmin, Wahoo, Zwift, and other cycling apps calculate speed.
@@ -79,13 +79,13 @@ The sensor implements the standard BLE service:
 Cycling Speed and Cadence (CSC)
 
 Service UUID:
-
+```
 1816
-
+```
 Characteristic:
-
+```
 2A5B
-
+```
 This characteristic sends notifications whenever new data is available.
 
 You don't poll it—you subscribe to notifications.
@@ -93,7 +93,7 @@ You don't poll it—you subscribe to notifications.
 Project architecture
 
 I'd keep the first version very simple:
-
+```
 MainActivity
 
 ↓
@@ -111,9 +111,10 @@ CSC Notification Parser
 ↓
 
 Display values on screen
+```
 
 Later you could add:
-
+```
 Charts
 
 Ride recording
@@ -133,16 +134,18 @@ Heart rate
 Cadence
 
 Power meter
+```
+
 Android permissions
 
 Modern Android requires:
-
+```
 BLUETOOTH_SCAN
 
 BLUETOOTH_CONNECT
 
 ACCESS_FINE_LOCATION
-
+```
 (Android 12+ handles Bluetooth permissions a bit differently than older versions.)
 
 Libraries
@@ -167,25 +170,25 @@ Development effort
 
 A rough estimate:
 
-Android project setup: 15 minutes
-BLE scanning: 1 hour
-Connecting to the sensor: 1–2 hours
-Receiving notifications: 1 hour
-Parsing CSC data: 1–2 hours
-Calculating speed: 30 minutes
+1. Android project setup: 15 minutes
+2. BLE scanning: 1 hour
+3. Connecting to the sensor: 1–2 hours
+4. Receiving notifications: 1 hour
+5. Parsing CSC data: 1–2 hours
+6. Calculating speed: 30 minutes
 
 In a weekend, you could have a working app that displays live speed.
 
 My suggested roadmap
-Create an empty Android app.
-Scan for BLE devices.
-Connect to the Garmin sensor.
-Subscribe to CSC notifications.
-Display raw values.
-Calculate speed.
-Display current speed.
-Record ride data.
-Add graphs and statistics.
+1. Create an empty Android app.
+2. Scan for BLE devices.
+3. Connect to the Garmin sensor.
+4. Subscribe to CSC notifications.
+5. Display raw values.
+6. Calculate speed.
+7. Display current speed.
+8. Record ride data.
+9. Add graphs and statistics.
 
 This builds complexity gradually and keeps each step manageable.
 
