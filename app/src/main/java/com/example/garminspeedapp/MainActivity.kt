@@ -117,27 +117,26 @@ fun BluetoothScreen(
                 if (isScanning) {
                     scanner.stopScan()
                 } else {
-                    // Request permissions before scanning
-                    val permissions = mutableListOf(Manifest.permission.ACCESS_FINE_LOCATION)
+                    val requiredPermissions = mutableListOf(Manifest.permission.ACCESS_FINE_LOCATION)
                     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-                        permissions.add(Manifest.permission.BLUETOOTH_SCAN)
-                        permissions.add(Manifest.permission.BLUETOOTH_CONNECT)
-                    }
-                    
-                    val allGranted = permissions.all {
-                        androidx.core.content.ContextCompat.checkSelfPermission(context, it) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                        requiredPermissions.add(Manifest.permission.BLUETOOTH_SCAN)
+                        requiredPermissions.add(Manifest.permission.BLUETOOTH_CONNECT)
                     }
 
-                    if (allGranted) {
+                    val ungrantedPermissions = requiredPermissions.filter {
+                        androidx.core.content.ContextCompat.checkSelfPermission(context, it) != android.content.pm.PackageManager.PERMISSION_GRANTED
+                    }
+
+                    if (ungrantedPermissions.isEmpty()) {
                         scanner.startScan()
                     } else {
-                        permissionLauncher.launch(permissions.toTypedArray())
+                        permissionLauncher.launch(ungrantedPermissions.toTypedArray())
                     }
                 }
             },
             enabled = true
         ) {
-            Text(text = if (isScanning) "Stop Scanning" else "Start Scanning")
+            Text(text = if (isScanning) "Stop Scanning" else "Start Scanning...")
         }
 
         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))

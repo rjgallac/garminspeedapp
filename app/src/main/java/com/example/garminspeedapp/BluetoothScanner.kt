@@ -25,22 +25,33 @@ class BluetoothScanner(private val context: Context) {
     private var scanCallback: ScanCallback? = null
 
     fun startScan() {
-        if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled) {
+        if (bluetoothAdapter == null) {
+            android.util.Log.e("BluetoothScanner", "Bluetooth adapter is null")
+            return
+        }
+        if (!bluetoothAdapter.isEnabled) {
+            android.util.Log.e("BluetoothScanner", "Bluetooth is disabled")
             return
         }
 
         val scanner = bluetoothAdapter.bluetoothLeScanner
-        if (scanner == null) return
+        if (scanner == null) {
+            android.util.Log.e("BluetoothScanner", "Bluetooth LE scanner is null")
+            return
+        }
 
+        android.util.Log.d("BluetoothScanner", "Starting scan...")
         _isScanning.value = true
         _discoveredDevices.value = emptySet()
 
         scanCallback = object : ScanCallback() {
             override fun onScanResult(callbackType: Int, result: ScanResult) {
+                android.util.Log.d("BluetoothScanner", "Found device: ${result.device.name ?: "Unknown"} [${result.device.address}]")
                 _discoveredDevices.update { it + result.device }
             }
 
             override fun onScanFailed(errorCode: Int) {
+                android.util.Log.e("BluetoothScanner", "Scan failed with error code: $errorCode")
                 _isScanning.value = false
                 scanCallback = null
             }
@@ -50,6 +61,7 @@ class BluetoothScanner(private val context: Context) {
     }
 
     fun stopScan() {
+        android.util.Log.d("BluetoothScanner", "Stopping scan...")
         val scanner = bluetoothAdapter?.bluetoothLeScanner ?: return
         scanCallback?.let {
             scanner.stopScan(it)
