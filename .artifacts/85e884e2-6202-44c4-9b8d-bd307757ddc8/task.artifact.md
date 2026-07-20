@@ -1,0 +1,23 @@
+# Activity Tracker Implementation Tasks
+
+- `[x]` **Phase 1: Data Layer Completion**
+    - `[x]` Create `RideDao`.
+    - `[x]` Set up Room Database (`AppDatabase`).
+    - `[x]` Implement a Repository to bridge Room and Session logic.
+- `[ ]` **Phase 2: Core Business Logic**
+    - `[ ]` Implement `SessionManager` with:
+        - `[ ]` Timer logic (seconds elapsed).
+        - `[ ]` Distance calculation (miles) based on speed updates from `BluetoothManager`.
+        - `[ ]` Start/Stop lifecycle.
+    - `[ ]` Define `AppScreen` sealed class for navigation.
+- `[ ]` **Phase 3: UI & Navigation**
+    - `[ ]` Implement navigation logic in `MainActivity` (Scanner vs Tracking).
+    - `[ ]` Create `TrackingScreen` Composable:
+        - `[ ]` Large Speed display (MPH).
+        - `[ ]` Elapsed Time display.
+        - `[ ]` Distance display (Miles).
+        - `[ ]` Start/Stop buttons.
+- `[ ]` **Phase 4: Integration & Persistence**
+    - `[ ]` Wire up `BluetoothManager` speed updates to `SessionManager`.
+    - `[ ]` Implement saving session to Room on "Stop".
+    - `[ ]` Verify build and runtime behavior.
