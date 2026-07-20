@@ -9,6 +9,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -21,6 +22,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.garminspeedapp.ui.SessionManager
+import com.example.garminspeedapp.ui.AppScreen
+import com.example.garminspeedapp.ui.TrackingScreen
 import com.example.garminspeedapp.ui.theme.GarminSpeedAppTheme
 
 class MainActivity : ComponentActivity() {
@@ -28,24 +32,32 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // In a real app, these should be in a ViewModel and injected via Hilt/Koin
         val scanner = BluetoothScanner(applicationContext)
         val manager = BluetoothManager(applicationContext)
+        val sessionManager = SessionManager(applicationContext, manager)
 
         setContent {
             GarminSpeedAppTheme {
                 val context = androidx.compose.ui.platform.LocalContext.current
+                var currentScreen by remember { mutableStateOf<AppScreen>(AppScreen.Scanner) }
                 
-                val permissionLauncher = rememberLauncherForActivityResult(
-                    ActivityResultContracts.RequestMultiplePermissions()
-                ) { permissions ->
-                    val allGranted = permissions.entries.all { it.value }
-                    if (!allGranted) {
-                        // Handle permission denial if needed
+                val connectionState by manager.connectionState.collectAsState()
+
+                // React to connection state changes for navigation
+                LaunchedEffect(connectionState) {
+                    if (connectionStatusIsConnected(connectionState)) {
+                        currentScreen = AppScreen.Tracking
+                    } else if (connectionStatusIsDisconnected(connectionState)) {
+                        currentScreen = AppScreen.Scanner
                     }
                 }
 
-                // Launcher for Bluetooth enablement request
+                val permissionLauncher = rememberLauncherForActivityResult(
+                    ActivityResultContracts.RequestMultiplePermissions()
+                ) { permissions ->
+                    // Handle it
+                }
+
                 val bluetoothEnableLauncher = rememberLauncherForActivityResult(
                     ActivityResultContracts.StartActivityForResult()
                 ) { result ->
@@ -55,23 +67,44 @@ class MainActivity : ComponentActivity() {
                 }
 
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    BluetoothScreen(
-                        scanner = scanner,
-                        manager = manager,
-                        modifier = Modifier.padding(innerPadding),
-                        permissionLauncher = permissionLauncher,
-                        onBluetoothEnableRequest = {
-                            val enableBtIntent = android.content.Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
-                            bluetoothEnableLauncher.launch(enableBtIntent)
-                        }
-                    )
+                    when (val screen = currentScreen) {
+                        is AppScreen.Scanner -> BluetoothScreen(
+                            scanner = scanner,
+                            manager = manager,
+                            modifier = Modifier.padding(innerPadding),
+                            permissionLauncher = permissionLauncher,
+                            onBluetoothEnableRequest = {
+                                val enableBtIntent = android.content.Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+                                bluetoothEnableLauncher.launch(enableBtIntent)
+                            },
+                            onDeviceConnected = {
+                                currentScreen = AppScreen.Tracking
+                            }
+                        )
+                        is AppScreen.Tracking -> TrackingScreen(
+                            sessionManager = sessionManager,
+                            bluetoothManager = manager,
+                            modifier = Modifier.padding(innerPadding),
+                            onBackToScanner = {
+                                currentScreen = AppScreen.Scanner
+                            }
+                        )
+                    }
                 }
             }
         }
     }
 
-    // Removed permissionLauncher from here as it must be called in Composable context
+    private fun connectionStatusIsConnected(state: BluetoothManager.ConnectionState): Boolean {
+        return state is BluetoothManager.ConnectionState.Connected
+    }
 
+    private fun connectionStatusIsDisconnected(state: BluetoothManager.ConnectionState): Boolean {
+        return state is BluetoothManager.ConnectionState.Disconnected
+    }
+    
+    // I'll add these helper functions to MainActivity if needed, 
+    // but let's see if they are actually used elsewhere.
 }
 
 @Composable
@@ -79,8 +112,9 @@ fun BluetoothScreen(
     scanner: BluetoothScanner,
     manager: BluetoothManager,
     modifier: Modifier = Modifier,
-    permissionLauncher: androidx.activity.result.ActivityResultLauncher<Array<String>>,
-    onBluetoothEnableRequest: () -> Unit
+    permissionLauncher: ActivityResultLauncher<Array<String>>,
+    onBluetoothEnableRequest: () -> Unit,
+    onDeviceConnected: () -> Unit = {}
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val devices by scanner.discoveredDevices.collectAsState()
@@ -88,8 +122,7 @@ fun BluetoothScreen(
     val connectionState by manager.connectionState.collectAsState()
 
     Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
-        Text(text = "Bluetooth Scanner", fontSize = 24.sp, fontWeight = FontWeight
-            .Bold)
+        Text(text = "Bluetooth Scanner", fontSize = 24.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
 
         val stateText = when (connectionState) {
@@ -145,6 +178,7 @@ fun BluetoothScreen(
             items(devices.toList()) { device ->
                 DeviceItem(device = device, onClick = {
                     manager.connect(device)
+                    onDeviceConnected()
                 })
                 HorizontalDivider()
             }

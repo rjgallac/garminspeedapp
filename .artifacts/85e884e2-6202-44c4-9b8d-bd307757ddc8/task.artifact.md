@@ -4,12 +4,12 @@
     - `[x]` Create `RideDao`.
     - `[x]` Set up Room Database (`AppDatabase`).
     - `[x]` Implement a Repository to bridge Room and Session logic.
-- `[ ]` **Phase 2: Core Business Logic**
-    - `[ ]` Implement `SessionManager` with:
-        - `[ ]` Timer logic (seconds elapsed).
-        - `[ ]` Distance calculation (miles) based on speed updates from `BluetoothManager`.
-        - `[ ]` Start/Stop lifecycle.
-    - `[ ]` Define `AppScreen` sealed class for navigation.
+- `[x]` **Phase 2: Core Business Logic**
+    - `[x]` Implement `SessionManager` with:
+        - `[x]` Timer logic (seconds elapsed).
+        - `[x]` Distance calculation (miles) based on speed updates from `BluetoothManager`.
+        - `[x]` Start/Stop lifecycle.
+    - `[x]` Define `AppScreen` sealed class for navigation.
 - `[ ]` **Phase 3: UI & Navigation**
     - `[ ]` Implement navigation logic in `MainActivity` (Scanner vs Tracking).
     - `[ ]` Create `TrackingScreen` Composable:
