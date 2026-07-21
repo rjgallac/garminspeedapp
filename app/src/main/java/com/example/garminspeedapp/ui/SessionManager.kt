@@ -1,13 +1,14 @@
 package com.example.garminspeedapp.ui
 
-import android.content.Context
 import com.example.garminspeedapp.BluetoothManager
+import com.example.garminspeedapp.data.RideRepository
+import com.example.garminspeedapp.data.RideEntity
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
 class SessionManager(
-    private val context: Context,
-    private val bluetoothManager: BluetoothManager
+    private val bluetoothManager: BluetoothManager,
+    private val rideRepository: RideRepository
 ) {
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private var timerJob: Job? = null
@@ -32,9 +33,20 @@ class SessionManager(
     }
 
     fun stopSession() {
+        val completedSession = _sessionState.value.copy(status = SessionStatus.Stopped)
+        _sessionState.value = completedSession
         timerJob?.cancel()
-        _sessionState.value = _sessionState.value.copy(status = SessionStatus.Stopped)
-        // TODO: Implement saving to Room via Repository
+
+        scope.launch(Dispatchers.IO) {
+            val ride = RideEntity(
+                startTime = System.currentTimeMillis() - (completedSession.elapsedTimeSeconds * 1000L),
+                endTime = System.currentTimeMillis(),
+                durationSeconds = completedSession.elapsedTimeSeconds,
+                distanceMiles = completedSession.distanceMiles,
+                maxSpeedMph = completedSession.currentSpeedMph.toDouble()
+            )
+            rideRepository.insertRide(ride)
+        }
     }
 
     private fun startTimer() {

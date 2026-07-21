@@ -22,6 +22,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.garminspeedapp.data.AppDatabase
+import com.example.garminspeedapp.data.RideRepository
 import com.example.garminspeedapp.ui.SessionManager
 import com.example.garminspeedapp.ui.AppScreen
 import com.example.garminspeedapp.ui.TrackingScreen
@@ -34,7 +36,9 @@ class MainActivity : ComponentActivity() {
 
         val scanner = BluetoothScanner(applicationContext)
         val manager = BluetoothManager(applicationContext)
-        val sessionManager = SessionManager(applicationContext, manager)
+        val database = AppDatabase.getDatabase(applicationContext)
+        val repository = RideRepository(database.rideDao())
+        val sessionManager = SessionManager(manager, repository)
 
         setContent {
             GarminSpeedAppTheme {
@@ -47,8 +51,13 @@ class MainActivity : ComponentActivity() {
                 LaunchedEffect(connectionState) {
                     if (connectionStatusIsConnected(connectionState)) {
                         currentScreen = AppScreen.Tracking
+                        sessionManager.startSession()
                     } else if (connectionStatusIsDisconnected(connectionState)) {
                         currentScreen = AppScreen.Scanner
+                        // We don't necessarily stop the session here, 
+                        // as it might be a transient disconnection, 
+                        // but in this app, we'll assume connection loss stops tracking.
+                        sessionManager.stopSession()
                     }
                 }
 

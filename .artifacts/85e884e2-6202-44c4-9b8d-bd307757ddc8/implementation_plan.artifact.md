@@ -1,51 +1,29 @@
-# Transition from Bluetooth Scanner to Activity Tracker
+# Implementation Plan: Complete Activity Tracker Integration
 
-This plan outlines the transformation of the application from a simple Bluetooth device scanner into a functional cycling session tracker with speed, time, and distance capabilities.
-
-## User Review Required
-
-> [!IMPORTANT]
-> This is a significant architectural change. We are introducing a new state management layer that dictates which screen is currently visible to the user.
-
-## Open Questions
-
-*   **Persistence**: Should session data (distance/time) be saved to a local database (like Room) so users can see a history of their rides, or should it only exist for the duration of the current app session?
-*   **Units**: Do you want to support both Metric (km/h) and Imperial (mph) units, or stick to one for now?
+This plan covers the final tasks for the Activity Tracker implementation: wiring `BluetoothManager` to `SessionManager` and implementing session persistence in Room.
 
 ## Proposed Changes
 
-### [NEW] State Management Layer
+### [MODIFY] `BluetoothManager.kt`
+- Update `onConnectionStateChange` to trigger a callback or use a Flow that `SessionManager` can observe, to automatically start the session when connected. Wait, better yet: let `MainActivity` handle the orchestration if it already manages screen switching.
+- Actually, I'll add a way for `BluetoothManager` to notify interested parties of connection changes beyond just the state flow, or simply rely on the fact that `MainActivity` is observing the state and will trigger session start.
 
-#### `AppScreen.kt` (New File)
-- Define a sealed class `AppScreen` representing the possible views: `Scanner` and `Tracking`.
-
-#### `SessionManager.kt` (New File)
-- A new component to manage the "Active Session" logic.
-- Responsibilities:
-    - Managing a `Timer` (elapsed time).
-    - Calculating `Distance` based on incoming speed data and elapsed time.
-    - Handling `Start` and `Stop` commands.
-    - Providing `StateFlows` for UI to observe.
+### [MODIFY] `SessionManager.kt`
+- **Inject Repository**: Pass `RideRepository` into `SessionManager`.
+- **Auto-start Logic**: Ensure `startSession()` is called when a connection is established (or provide a method to be called from `MainActivity`).
+- **Implement Persistence**: In `stopSession()`, create a `RideEntity` from the current `SessionState` and use the repository to save it.
+- **Scope Management**: Use a `CoroutineScope` that allows for database operations on `stopSession`.
 
 ### [MODIFY] `MainActivity.kt`
-
-- **Navigation Logic**: Update the root Composable to observe both `BluetoothManager.connectionState` AND `SessionManager.sessionState`.
-- **Screen Switching**:
-    - If `ConnectionState == Connected`, show `TrackingScreen`.
-    - Otherwise, show `BluetoothScreen`.
-- **UI Implementation**: Create the `TrackingScreen` Composable with large, readable typography for speed, time, and distance.
-
-### [MODIFY] `BluetoothManager.kt`
-
-- Update to ensure that when a device is connected, it triggers any necessary session initialization if a session was previously running.
+- Update instantiation logic to include `AppDatabase` and `RideRepository`.
+- In the `LaunchedEffect` that observes `connectionState`, call `sessionManager.startSession()` when status transitions to `Connected`.
 
 ## Verification Plan
 
 ### Manual Verification
-1.  **Connection Flow**: Verify that connecting to a sensor automatically switches the screen from "Scanner" to "Tracker".
-2.  **Timer Functionality**: Verify that clicking "Start" begins the timer and clicking "Stop" pauses it.
-3.  **Data Integration**: Verify that as the Bluetooth sensor sends speed updates, the `TrackingScreen` updates its speed display in real-time.
-4.  **Distance Calculation**: Verify that distance increases proportionally with speed and time.
+1. **Connection & Auto-start**: Connect to a Bluetooth device and verify that the session starts (timer begins) automatically.
+2. **Persistence**: Stop a session and verify through logs or a future "History" screen (if implemented) that the ride was saved.
+*Note: Since there is no history screen yet, I will add logging to confirm the save operation.*
 
 ### Automated Tests
-- Unit tests for `SessionManager` to ensure math (distance = speed * time) is accurate across various speed/time intervals.
+- Verify `SessionManager.stopSession()` triggers the repository's `insertRide` method.

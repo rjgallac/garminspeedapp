@@ -10,14 +10,14 @@
         - `[x]` Distance calculation (miles) based on speed updates from `BluetoothManager`.
         - `[x]` Start/Stop lifecycle.
     - `[x]` Define `AppScreen` sealed class for navigation.
-- `[ ]` **Phase 3: UI & Navigation**
-    - `[ ]` Implement navigation logic in `MainActivity` (Scanner vs Tracking).
-    - `[ ]` Create `TrackingScreen` Composable:
-        - `[ ]` Large Speed display (MPH).
-        - `[ ]` Elapsed Time display.
-        - `[ ]` Distance display (Miles).
-        - `[ ]` Start/Stop buttons.
-- `[ ]` **Phase 4: Integration & Persistence**
-    - `[ ]` Wire up `BluetoothManager` speed updates to `SessionManager`.
+- `[x]` **Phase 3: UI & Navigation**
+    - `[x]` Implement navigation logic in `MainActivity` (Scanner vs Tracking).
+    - `[x]` Create `TrackingScreen` Composable:
+        - `[x]` Large Speed display (MPH).
+        - `[x]` Elapsed Time display.
+        - `[x]` Distance display (Miles).
+        - `[x]` Start/Stop buttons.
+- `[/]` **Phase 4: Integration & Persistence**
+    - `[/]` Wire up `BluetoothManager` speed updates to `SessionManager`.
     - `[ ]` Implement saving session to Room on "Stop".
     - `[ ]` Verify build and runtime behavior.
