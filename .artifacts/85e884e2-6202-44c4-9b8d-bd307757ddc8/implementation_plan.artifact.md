@@ -1,29 +1,25 @@
-# Implementation Plan: Complete Activity Tracker Integration
+# Stop Scanning on Device Selection
 
-This plan covers the final tasks for the Activity Tracker implementation: wiring `BluetoothManager` to `SessionManager` and implementing session persistence in Room.
+This plan implements the requirement that the Bluetooth scan should automatically stop once a user selects a device from the list.
 
 ## Proposed Changes
 
-### [MODIFY] `BluetoothManager.kt`
-- Update `onConnectionStateChange` to trigger a callback or use a Flow that `SessionManager` can observe, to automatically start the session when connected. Wait, better yet: let `MainActivity` handle the orchestration if it already manages screen switching.
-- Actually, I'll add a way for `BluetoothManager` to notify interested parties of connection changes beyond just the state flow, or simply rely on the fact that `MainActivity` is observing the state and will trigger session start.
+### `BluetoothScanner.kt`
+#### [MODIFY] `BluetoothScanner.kt`
+- Add a way to signal when a scan should stop, or modify `onScanResult` to allow for an external trigger.
+- *Refined approach:* I will add a `stopScanOnDiscovery` boolean parameter to the `startScan` function. If true, the scanner will automatically call `stopScan()` as soon as any device is discovered.
 
-### [MODIFY] `SessionManager.kt`
-- **Inject Repository**: Pass `RideRepository` into `SessionManager`.
-- **Auto-start Logic**: Ensure `startSession()` is called when a connection is established (or provide a method to be called from `MainActivity`).
-- **Implement Persistence**: In `stopSession()`, create a `RideEntity` from the current `SessionState` and use the repository to save it.
-- **Scope Management**: Use a `CoroutineScope` that allows for database operations on `stopSession`.
-
-### [MODIFY] `MainActivity.kt`
-- Update instantiation logic to include `AppDatabase` and `RideRepository`.
-- In the `LaunchedEffect` that observes `connectionState`, call `sessionManager.startSession()` when status transitions to `Connected`.
+### `MainActivity.kt`
+#### [MODIFY] `MainActivity.kt`
+- Update the `Button` click listener in `BluetoothScreen` to pass `true` to `scanner.startScan(stopScanOnDiscovery = true)` so that selecting a device (which happens via the `DeviceItem`'s `onClick`) is complemented by an automatic stop when the list updates.
 
 ## Verification Plan
 
-### Manual Verification
-1. **Connection & Auto-start**: Connect to a Bluetooth device and verify that the session starts (timer begins) automatically.
-2. **Persistence**: Stop a session and verify through logs or a future "History" screen (if implemented) that the ride was saved.
-*Note: Since there is no history screen yet, I will add logging to confirm the save operation.*
-
 ### Automated Tests
-- Verify `SessionManager.stopSession()` triggers the repository's `insertRide` method.
+- No unit tests currently exist for this logic, but I will verify via manual build and run.
+
+### Manual Verification
+- Build and run the app.
+- Start a Bluetooth scan.
+- Tap on a device in the `LazyColumn`.
+- **Expected Result:** The scan should stop immediately upon clicking the device, and the "Start Scanning..." button should revert to its initial state (or at least not stay in "Stop Scanning" mode).

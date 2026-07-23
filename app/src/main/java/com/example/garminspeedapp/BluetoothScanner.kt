@@ -24,7 +24,7 @@ class BluetoothScanner(private val context: Context) {
 
     private var scanCallback: ScanCallback? = null
 
-    fun startScan() {
+    fun startScan(stopOnDiscovery: Boolean = false) {
         if (bluetoothAdapter == null) {
             android.util.Log.e("BluetoothScanner", "Bluetooth adapter is null")
             return
@@ -48,6 +48,10 @@ class BluetoothScanner(private val context: Context) {
             override fun onScanResult(callbackType: Int, result: ScanResult) {
                 android.util.Log.d("BluetoothScanner", "Found device: ${result.device.name ?: "Unknown"} [${result.device.address}]")
                 _discoveredDevices.update { it + result.device }
+                
+                if (stopOnDiscovery) {
+                    stopScan()
+                }
             }
 
             override fun onScanFailed(errorCode: Int) {

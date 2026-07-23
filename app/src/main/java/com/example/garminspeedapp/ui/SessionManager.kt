@@ -46,6 +46,7 @@ class SessionManager(
                 maxSpeedMph = completedSession.currentSpeedMph.toDouble()
             )
             rideRepository.insertRide(ride)
+            android.util.Log.d("SessionManager", "Successfully saved ride: ${ride.durationSeconds}s, ${String.format("%.2f", ride.distanceMiles)} miles")
         }
     }
 

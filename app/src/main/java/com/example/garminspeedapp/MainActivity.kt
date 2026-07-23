@@ -170,7 +170,7 @@ fun BluetoothScreen(
                     }
 
                     if (ungrantedPermissions.isEmpty()) {
-                        scanner.startScan()
+                        scanner.startScan(stopOnDiscovery = true)
                     } else {
                         permissionLauncher.launch(ungrantedPermissions.toTypedArray())
                     }
