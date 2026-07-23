@@ -124,7 +124,13 @@ class BluetoothManager(private val context: Context) {
             if (data.size >= offset + 2) {
                 // Using ByteBuffer for easy conversion, or manual bit shifting
                 val speedInHph = ((data[offset].toInt() and 0xFF) shl 8) or (data[offset + 1].toInt() and 0xFF)
-                _speed.value = speedInHph / 100f
+                
+                // 1. Convert HPH to km/h: 1 hph = 0.1 km/h
+                val speedInKmh = speedInHph / 10f
+                
+                // 2. Convert km/h to mph: 1 km/h ≈ 0.621371 mph
+                _speed.value = speedInKmh * 0.621371f
+                
                 offset += 2
             }
 

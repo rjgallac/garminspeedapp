@@ -76,7 +76,7 @@ class SessionManager(
         val currentTime = System.currentTimeMillis()
         if (lastUpdateTimeMillis != 0L) {
             val deltaTimeSeconds = (currentTime - lastUpdateTimeMillis) / 1000.0
-            // Speed is in MPH. Distance (miles) = Speed (mph) * Time (hours)
+            // Speed is in MPH. Distance (miles) = Speed (miles/h) * Time (hours)
             // Time in hours = deltaTimeSeconds / 3600
             val deltaMiles = speedMph * (deltaTimeSeconds / 3600.0)
             
